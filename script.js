@@ -76,7 +76,6 @@ const LearnerSubmissions = [
   },
 ];
 
-//checkscore
 //If an assignment is not yet due, do not include it in the results or the average.
 //Additionally, if the learner’s submission is late (submitted_at is past due_at), deduct 10 percent of the total points possible from their score for that assignment.
 
@@ -87,26 +86,29 @@ function getLearnerData(course, ag, submissions) {
   //get unique learners as id key value
   let uniqueLearnerID = [];
   for (let i = 0; i < submissions.length; i++) {
-    // Check if the picked element is already printed
     let j;
     for (j = 0; j < i; j++)
       if (submissions[i].learner_id == submissions[j].learner_id) {
         break;
       }
-
     if (i == j) {
       uniqueLearnerID.push(submissions[i].learner_id);
     }
   }
 
-  let score;
-  let posiblescore;
+  let score; //what student scored
+  let possibleScore; //the total possible score of assignment
+  let scoreSum = 0; //sum of student's scores
+  let possibleScoreSum = 0; //sum of possible score of assignments
+  let scoreAverage; //average score for a student
+  let students; //students
+  let student; //student id
   //for each student
   for (let i = 0; i < uniqueLearnerID.length; i++) {
-    let sum = 0;
+    student = uniqueLearnerID[i];
     //check submissions for student id
     for (let j = 0; j < submissions.length; j++) {
-      if (submissions[j].learner_id == uniqueLearnerID[i]) {
+      if (submissions[j].learner_id == student) {
         //console.log(submissions[j].learner_id == uniqueLearnerID[i]); //checkkkkkk
         //look at assignment id and compare dates
         for (let k = 0; k < ag.assignments.length; k++) {
@@ -114,33 +116,46 @@ function getLearnerData(course, ag, submissions) {
             //console.log(submissions[j].assignment_id == ag.assignments[0].id); //checkkkkkk
             //look at due dates vs submission dates
             //if not assignment not due yet
-            // if (
-            //   new Date(submissions[j].submission.submitted_at) <
-            //   new Date(ag.assignments[k].due_at)
-            // ) {
-            //   score = 0;
-            //   posiblescore = 0;
-            // }
-            //if late
             if (
-              new Date(submissions[j].submission.submitted_at) >
-              new Date(ag.assignments[k].due_at)
+              new Date(ag.assignments[k].due_at).getFullYear() -
+                new Date(submissions[j].submission.submitted_at).getFullYear() >
+              5
             ) {
-              score =
-                submissions[j].submission.score -
-                ag.assignments[k].points_possible * 0.1;
-              posiblescore = ag.assignments[k].points_possible;
+              score = 0;
+              possibleScore = 0;
+              break;
             }
-            //if on time or earlier
+            //if late
             else {
-              score = submissions[j].submission.score;
-              posiblescore = ag.assignments[k].points_possible;
+              if (
+                new Date(submissions[j].submission.submitted_at) >
+                new Date(ag.assignments[k].due_at)
+              ) {
+                score =
+                  submissions[j].submission.score -
+                  ag.assignments[k].points_possible * 0.1;
+                possibleScore = ag.assignments[k].points_possible;
+              }
+              //if on time or earlier
+              else {
+                score = submissions[j].submission.score;
+                possibleScore = ag.assignments[k].points_possible;
+              }
             }
+            scoreSum += score;
+            possibleScoreSum += possibleScore;
+            //console.log(score, possibleScore); //checkkkkkkk
+            scoreAverage = { avg: scoreSum / possibleScoreSum };
           }
-          console.log(score, posiblescore);
         }
       }
     }
+    students = { id: student };
+    //reset sums for each student
+    scoreSum = 0;
+    possibleScoreSum = 0;
+    //append objects to results array
+    result.push({ ...students, ...scoreAverage });
   }
 
   // const result = [
