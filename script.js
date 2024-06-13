@@ -82,9 +82,18 @@ const LearnerSubmissions = [
 function getLearnerData(course, ag, submissions) {
   // here, we would process this data to achieve the desired result.
   let result = [];
-
-  //get unique learners as id key value
   let uniqueLearnerID = [];
+  let score; //what student scored
+  let possibleScore; //the total possible score of assignment
+  let scoreSum = 0; //sum of student's scores
+  let possibleScoreSum = 0; //sum of possible score of assignments
+  let scoreAverage; //average score for a student
+  let students; //students object of id and student id
+  let student; //student id
+  let assignmentID; //assignment id
+  let assignments = {}; //object of assignment if and score
+  //get unique learners as id key value
+
   for (let i = 0; i < submissions.length; i++) {
     let j;
     for (j = 0; j < i; j++)
@@ -96,13 +105,6 @@ function getLearnerData(course, ag, submissions) {
     }
   }
 
-  let score; //what student scored
-  let possibleScore; //the total possible score of assignment
-  let scoreSum = 0; //sum of student's scores
-  let possibleScoreSum = 0; //sum of possible score of assignments
-  let scoreAverage; //average score for a student
-  let students; //students
-  let student; //student id
   //for each student
   for (let i = 0; i < uniqueLearnerID.length; i++) {
     student = uniqueLearnerID[i];
@@ -115,7 +117,7 @@ function getLearnerData(course, ag, submissions) {
           if (submissions[j].assignment_id == ag.assignments[k].id) {
             //console.log(submissions[j].assignment_id == ag.assignments[0].id); //checkkkkkk
             //look at due dates vs submission dates
-            //if not assignment not due yet
+            //if not assignment not due yet aka not due within 5 years for example
             if (
               new Date(ag.assignments[k].due_at).getFullYear() -
                 new Date(submissions[j].submission.submitted_at).getFullYear() >
@@ -123,7 +125,7 @@ function getLearnerData(course, ag, submissions) {
             ) {
               score = 0;
               possibleScore = 0;
-              break;
+              break; //break to not include in average or scores/possibleScore
             }
             //if late
             else {
@@ -146,16 +148,19 @@ function getLearnerData(course, ag, submissions) {
             possibleScoreSum += possibleScore;
             //console.log(score, possibleScore); //checkkkkkkk
             scoreAverage = { avg: scoreSum / possibleScoreSum };
+            assignmentID = "assignment #" + ag.assignments[k].id;
+            assignments[assignmentID] = score / possibleScore;
           }
         }
       }
     }
     students = { id: student };
+
+    //append objects to results array
+    result.push({ ...students, ...scoreAverage, ...assignments });
     //reset sums for each student
     scoreSum = 0;
     possibleScoreSum = 0;
-    //append objects to results array
-    result.push({ ...students, ...scoreAverage });
   }
 
   // const result = [
